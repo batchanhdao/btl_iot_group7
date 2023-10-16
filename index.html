@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time DHT22 Data</title>
+</head>
+<body>
+    <h1>Real-time DHT22 Data</h1>
+    <p>Temperature: <span id="temperature">--</span>°C</p>
+    <p>Humidity: <span id="humidity">--</span>%</p>
+
+    <script>
+        // Tạo kết nối WebSocket đến máy chủ ESP32
+        const socket = new WebSocket('ws://' + window.location.hostname + ':80/');
+
+        // Khi kết nối được thiết lập
+        socket.onopen = function(event) {
+            console.log('WebSocket Connected');
+        };
+
+        // Khi nhận được dữ liệu từ máy chủ
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            document.getElementById('temperature').textContent = data.temperature;
+            document.getElementById('humidity').textContent = data.humidity;
+        };
+
+        // Khi có lỗi xảy ra
+        socket.onerror = function(event) {
+            console.error('WebSocket Error: ', event);
+        };
+
+        // Khi kết nối bị đóng
+        socket.onclose = function(event) {
+            if (event.wasClean) {
+                console.log('WebSocket Closed Cleanly');
+            } else {
+                console.error('WebSocket Connection Died');
+            }
+        };
+    </script>
+</body>
+</html>
