@@ -1,2 +1,3 @@
-# btl_iot_group7
-https://docs.google.com/document/d/1nviKiFsDmlR3RfjStg4YKHOSAtpBClvGuQ-qJb5EANo/edit?fbclid=IwAR0mAt1CPN8FiTBjRIq4LL2dz6fq3UH6xb-Z7rZ2m-Y-HGK2artcciIDWzE
+# Bài tập lớn IoT
+## Hệ thống giám sát nhiệt độ, độ ẩm trong phòng.
+[Tài liệu thiết kế](https://docs.google.com/document/d/1nviKiFsDmlR3RfjStg4YKHOSAtpBClvGuQ-qJb5EANo/)
