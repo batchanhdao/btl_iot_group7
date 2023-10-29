@@ -14,8 +14,8 @@ esp.osdebug(None)
 import gc
 gc.collect()
 
-ssid = 'Le Canh'
-# ssid = 'Canh1'
+# ssid = 'Le Canh'
+ssid = 'Canh1'
 password = '16011710'
 
 # connect to wifi
@@ -49,7 +49,6 @@ s.listen(5)
 
 def web_page():
     led = ""
-    global T_Tem, T_Hum
     if led1.value()==1:
         led = "ON"
         print('led on')
@@ -83,7 +82,7 @@ def web_page():
                                 document.getElementById("hum").innerHTML = data.hum;
                                 document.getElementById("tempStatus").innerHTML = "| Status: " + data.temp_status;
                                 document.getElementById("humStatus").innerHTML = "| Status: " + data.hum_status;
-                                document.getElementById("ledStatus").innerHTML = data.led_status;
+                                document.getElementById(ledStatus").innerHTML = "| Status: " + data.led_status;
                             
                             }
                         };
@@ -94,8 +93,8 @@ def web_page():
                        {   
                          receiveData('getData');   
                        }  
-                    // Gọi hàm updateData() mỗi 5 giây
-                    setInterval(updateData, 5000);
+                    // Gọi hàm updateData() mỗi 3 giây
+                    setInterval(updateData, 3000);
                 </script> 
             </head>
             <body>
@@ -116,23 +115,15 @@ def web_page():
                   </p>
                   <p>
                     <i class="" style="color:#00add6;"></i> 
-                    <span class="dht-labels">LED Notification:</span>
+                    <span class="dht-labels">LED Notification</span>
                     <span id="ledStatus">--.--</span>
                   </p>
                   <br>
                   <center>
-                      <form method="POST" action="/setTempHum">
-                        <span class="dht-labels">Temperature: </span>
-                        <input type="text" name="tempDown" value= """ + str(T_Tem[0]) + """ >
-                        <span>to</span>
-                        <input type="text" name="tempUp" value= """ + str(T_Tem[1]) + """ >
-                        <br>
-                        <span class="dht-labels">Humidity: </span>
-                        <input type="text" name="humDown" value= """ + str(T_Hum[0]) + """ >
-                        <span>to</span>
-                        <input type="text" name="humUp" value= """ + str(T_Hum[1]) + """ >
-                        <br>
-                        <button type="submit"> update </button>
+                      <form>
+                        <input type="text" name="setTemp">
+                        <input type="text" name="setHum">
+                        <button type="submit" name="setTempHum"> update </button>
                     </form>
                   </center>
                   <br>
@@ -166,17 +157,6 @@ while True:
     if "led1=0" in request:
         led1.value(0)
         
-    if "POST /setTempHum" in request:
-        vitri = request.find("tempDown")
-        values = request[vitri : len(request)-1]
-        print(values)
-        values = values.split('&')
-        tempDown, tempUp = values[0].split('='), values[1].split('=')
-        humDown, humUp = values[2].split('='), values[3].split('=')
-        T_Tem[0], T_Tem[1] = int(tempDown[1]), int(tempUp[1])
-        T_Hum[0], T_Hum[1] = int(humDown[1]), int(humUp[1])
-
-        
     response = web_page()
     
     if "getData" in request:
@@ -200,7 +180,6 @@ while True:
         if ledTH.value()==0:
             led_status = "DANK"
 
-
         data = {
             "temp": temp,  # Giá trị nhiệt độ từ MicroPython
             "hum": hum,    # Giá trị độ ẩm từ MicroPython
@@ -209,12 +188,13 @@ while True:
             "led_status": led_status
         }
         response = ujson.dumps(data)
-
+    
     conn.send('HTTP/1.1 200 OK\n')
     conn.send('Content-Type: text/html\n')
     conn.send('Connection: close\n\n')
     conn.sendall(response)
     conn.close()
+
 
 
 

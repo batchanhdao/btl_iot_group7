@@ -30,7 +30,11 @@ print('Connection successful')
 print(station.ifconfig())
 # ---------------------------------------
 
-# sensor = dht.DHT22(Pin(14))
+# sensor = dht.DHT22(Pin(23))
+# led1 = Pin(2, Pin.OUT)
+# led2 = Pin(4, Pin.OUT)
+# T_Tem = [0,40]
+# T_Hum = [20,80]
 
 def read_sensor():
     global temp, hum
@@ -51,46 +55,7 @@ def read_sensor():
 #         return('Failed to read sensor.')
 
 def web_page():
-    html = """<!DOCTYPE><html>
-    <head>
-        <title> ESP32 DHT Server </title>
-        <style>
-         html {
-           font-family: Arial;
-           display: inline-block;
-           margin: 0px auto;
-           text-align: center;
-          }
-          h2 { font-size: 3.0rem; }
-          p { font-size: 3.0rem; }
-          .units { font-size: 1.2rem; }
-          .dht-labels{
-            font-size: 1.5rem;
-            vertical-align:middle;
-            padding-bottom: 15px;
-          }
-        </style>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-    </head>
-    <body>
-        <h2>ESP DHT Server</h2>
-        <p>
-            <i class="fas fa-thermometer-half" style="color:#059e8a;"></i> 
-            <span class="dht-labels">Temperature</span> 
-            <span>"""+str(temp)+"""</span>
-            <sup class="units">C</sup>
-        </p>
-        <p>
-            <i class="fas fa-tint" style="color:#00add6;"></i> 
-            <span class="dht-labels">Humidity</span>
-            <span>"""+str(hum)+"""</span>
-            <sup class="units">%</sup>
-        </p>
-    </body>
-    </html>"""
-    
-    html1="""
+    html = """
 <!DOCTYPE html>
 <html>
 
