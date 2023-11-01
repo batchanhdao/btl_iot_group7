@@ -13,26 +13,12 @@
             text-align: center;
         }
 
-        h2 {
-            font-size: 3.0rem;
-        }
-
         p {
             font-size: 2.0rem;
         }
-
-        .units {
-            font-size: 1.2rem;
-        }
-
-        .dht-labels {
-            font-size: 2.0rem;
-            vertical-align: middle;
-            padding-bottom: 15px;
-        }
     </style>
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
-        integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+    <!-- <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
+        integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous"> -->
     <!-- <script>
         function receiveData(URL) {
             var xhr = new XMLHttpRequest();
@@ -62,17 +48,17 @@
 <body>
     <h2>Group 7</h2>
     <p>
-        <i class="fas fa-thermometer-half" style="color:#059e8a;"></i>
-        <span class="dht-labels">Temperature</span>
+        <!-- <i class="fas fa-thermometer-half" style="color:#059e8a;"></i> -->
+        <span>Temperature</span>
         <span id="temp">--.--</span>
-        <sup class="units">&deg;C</sup>
+        <span class="units">&deg;C</span>
         <span id="temp-status"> --.--</span>
     </p>
     <p>
-        <i class="fas fa-tint" style="color:#00add6;"></i>
-        <span class="dht-labels">Humidity</span>
+        <!-- <i class="fas fa-tint" style="color:#00add6;"></i> -->
+        <span>Humidity</span>
         <span id="hum">--.--</span>
-        <sup class="units">%</sup>
+        <span class="units">%</span>
         <span id="hum-status"> --.--</span>
     </p>
     <p>
@@ -80,27 +66,26 @@
         <span class="dht-labels">LED Notification:</span>
         <span id="led-status">--.--</span>
     </p>
-    <br>
+    <br />
     <form method="POST" action="/set-temp-hum">
         <span class="dht-labels">Temperature: </span>
         <input type="text" name="temp-down">
         <span>to</span>
         <input type="text" name="temp-up">
-        <br>
+        <br />
         <span class="dht-labels">Humidity: </span>
         <input type="text" name="hum-down">
         <span>to</span>
         <input type="text" name="hum-up">
-        <br>
+        <br />
         <button type="submit"> Update </button>
     </form>
-    <br>
+    <br />
     <form>
         <p>Led is:</p>
         <button type="submit" name="led1" value="1"> LED on </button>
         <button type="submit" name="led1" value="0"> LED off </button>
     </form>
-
 </body>
 
 </html>
