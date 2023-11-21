@@ -1,17 +1,21 @@
 from microWebSrv import MicroWebSrv
 from time import sleep
 import _thread
-from machine import Pin
 import dht
-
+from machine import Pin, SoftI2C
+from lcd_api import LcdApi
+from i2c_lcd import I2cLcd
 
 sensor = dht.DHT22(Pin(34))
 
-# đặt biến
+# đặt biến nhiệt độ, độ ẩm
 prev_temp = 1
 new_temp = 1
 prev_humid = 0
 new_humid = 0
+# khởi tạo màn hình LCD
+i2c = SoftI2C(scl=Pin(22), sda=Pin(21), freq=10000)
+lcd = I2cLcd(i2c, 0x27, 2, 16)
 
 
 # hàm lấy dữ liệu từ DHT22
@@ -23,6 +27,9 @@ def read_sensor():
 
 
 # hàm hiển thị ra màn hình LCD
+def lcd_output(string):
+    lcd.clear()
+    lcd.putstr(string)
 
 
 # hàm đổi màu LED RGB
