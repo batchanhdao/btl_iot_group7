@@ -8,9 +8,9 @@ import dht
 sensor = dht.DHT22(Pin(34))
 
 # đặt biến
-current_temp = 1
+prev_temp = 1
 new_temp = 1
-current_humid = 0
+prev_humid = 0
 new_humid = 0
 
 
@@ -20,6 +20,7 @@ def read_sensor():
     temp = sensor.temperature()
     hum = sensor.humidity()
     return (temp, hum)
+
 
 # hàm hiển thị ra màn hình LCD
 
