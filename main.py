@@ -28,6 +28,7 @@ def read_sensor():
 
 # hàm hiển thị ra màn hình LCD
 def lcd_output(string):
+    global lcd
     lcd.clear()
     lcd.putstr(string)
 
