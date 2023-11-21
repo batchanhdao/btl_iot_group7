@@ -7,8 +7,6 @@ from lcd_api import LcdApi
 from machine import PWM, Pin, SoftI2C
 from microWebSrv import MicroWebSrv
 
-sensor = dht.DHT22(Pin(34))
-
 # đặt biến nhiệt độ, độ ẩm
 prev_temp = 1
 new_temp = 1
@@ -16,6 +14,8 @@ prev_humid = 0
 new_humid = 0
 max_temp = 100
 max_humid = 90
+# Khởi tạo DHT22
+dht22 = dht.DHT22(Pin(34))
 # khởi tạo màn hình LCD
 i2c = SoftI2C(scl=Pin(22), sda=Pin(21), freq=10000)
 lcd = I2cLcd(i2c, 0x27, 2, 16)
@@ -25,10 +25,10 @@ is_buzzer_playing = False
 
 
 # hàm lấy dữ liệu từ DHT22
-def read_sensor():
-    sensor.measure()
-    temp = sensor.temperature()
-    hum = sensor.humidity()
+def read_dht22():
+    dht22.measure()
+    temp = dht22.temperature()
+    hum = dht22.humidity()
     return (temp, hum)
 
 
@@ -63,25 +63,29 @@ def play_song(song, tempo):
             play_tone(tones[song[note]])
         # tiếp tục phát âm trong quãng thời gian ứng với độ dài một nốt nhạc
         sleep(60 / tempo)
-    is_buzzer_playing = False
     be_quiet()
+    is_buzzer_playing = False
 
 
 # Hàm cập nhật các sensor theo chu kỳ
 def update_sensors():
-    # cần bổ sung hàm cập nhật nhiệt độ, độ ẩm ở đây
+    while True:
+        prev_temp = new_temp
+        prev_humid = new_humid
+        new_temp, new_humid = read_dht22()
+        if new_temp != prev_temp or new_humid != prev_humid:
+            lcd_output(f"{new_temp}, {new_humid}")
+        # if not is_buzzer_playing:
+        #     if new_temp > max_temp and new_humid > max_humid:
+        #         _thread.start_new_thread(play_song(song1, tempo1), ())
+        #     elif new_temp > max_temp:
+        #         _thread.start_new_thread(play_song(song2, tempo2), ())
+        #     elif new_humid > max_humid:
+        #         _thread.start_new_thread(play_song(song3, tempo3), ())
 
-    if new_temp != prev_temp or new_humid != prev_humid:
-        lcd_output(f"{new_temp}, {new_humid}")
-    # if not is_buzzer_playing:
-    #     if new_temp > max_temp and new_humid > max_humid:
-    #         play_song(song1, tempo1)
-    #     elif new_temp > max_temp:
-    #         play_song(song2, tempo2)
-    #     elif new_humid > max_humid:
-    #         play_song(song3, tempo3)
+        # Cần bổ sung hàm cập nhật led ở đây
 
-    # Cần bổ sung hàm cập nhật led ở đây
+        sleep(1)
 
 
 # các hàm xử lý websocket
@@ -94,9 +98,9 @@ def _accept_websocket_callback(websocket, httpClient):
     # Gửi dữ liệu đến front-end khi nhiệt độ, độ ẩm thay đổi
     def send_dht_data():
         while True:
-            temp, hum = read_sensor()
-            websocket.SendText("{'temp': temp, 'humid': hum}")
-            sleep(2)
+            if new_temp != prev_temp or new_humid != prev_humid:
+                websocket.SendText("{'temp': temp, 'humid': hum}")
+                sleep(1)
 
     _thread.start_new_thread(send_dht_data, ())
 
