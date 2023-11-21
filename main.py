@@ -1,10 +1,11 @@
-from microWebSrv import MicroWebSrv
-from time import sleep
 import _thread
+from time import sleep
+
 import dht
-from machine import Pin, SoftI2C
-from lcd_api import LcdApi
 from i2c_lcd import I2cLcd
+from lcd_api import LcdApi
+from machine import PWM, Pin, SoftI2C
+from microWebSrv import MicroWebSrv
 
 sensor = dht.DHT22(Pin(34))
 
@@ -16,6 +17,8 @@ new_humid = 0
 # khởi tạo màn hình LCD
 i2c = SoftI2C(scl=Pin(22), sda=Pin(21), freq=10000)
 lcd = I2cLcd(i2c, 0x27, 2, 16)
+# khởi tạo buzzer
+buzzer = PWM(Pin(4))
 
 
 # hàm lấy dữ liệu từ DHT22
@@ -37,6 +40,26 @@ def lcd_output(string):
 
 
 # hàm điều khiển buzzer phát âm thanh cảnh báo
+def play_tone(frequency):
+    buzzer.duty_u16(1000)
+    buzzer.freq(frequency)
+
+
+def be_quiet():
+    buzzer.duty_u16(0)
+
+
+def play_song(song, tempo):
+    for note in range(len(song)):
+        # nếu nốt nhạc = rest, không phát âm thanh
+        if song[note] == "R":
+            be_quiet()
+        # phát âm thanh ứng với tần số của nốt nhạc
+        else:
+            play_tone(tones[song[note]])
+        # tiếp tục phát âm trong quãng thời gian ứng với độ dài một nốt nhạc
+        sleep(60 / tempo)
+    be_quiet()
 
 
 # các hàm xử lý websocket
@@ -46,6 +69,7 @@ def _accept_websocket_callback(websocket, httpClient):
     websocket.RecvBinaryCallback = _recv_binary_callback
     websocket.ClosedCallback = _closed_callback
 
+    # Gửi dữ liệu đến front-end khi nhiệt độ, độ ẩm thay đổi
     def send_dht_data():
         while True:
             temp, hum = read_sensor()
@@ -55,6 +79,7 @@ def _accept_websocket_callback(websocket, httpClient):
     _thread.start_new_thread(send_dht_data, ())
 
 
+# Hàm nhận lệnh từ front-end người dùng
 def _recv_text_callback(websocket, message):
     print(f"WebSocket received text: {message}")
 
