@@ -1,6 +1,11 @@
 from microWebSrv import MicroWebSrv
 from time import sleep
 import _thread
+from machine import Pin
+import dht
+
+
+sensor = dht.DHT22(Pin(34))
 
 # đặt biến
 current_temp = 1
@@ -10,7 +15,11 @@ new_humid = 0
 
 
 # hàm lấy dữ liệu từ DHT22
-
+def read_sensor():
+    sensor.measure()
+    temp = sensor.temperature()
+    hum = sensor.humidity()
+    return (temp, hum)
 
 # hàm hiển thị ra màn hình LCD
 
@@ -30,7 +39,8 @@ def _accept_websocket_callback(websocket, httpClient):
 
     def send_dht_data():
         while True:
-            websocket.SendText("{'temp': 1, 'humid': 0}")
+            temp, hum = read_sensor()
+            websocket.SendText("{'temp': temp, 'humid': hum}")
             sleep(2)
 
     _thread.start_new_thread(send_dht_data, ())
