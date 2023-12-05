@@ -6,6 +6,7 @@ from i2c_lcd import I2cLcd
 from lcd_api import LcdApi
 from machine import PWM, Pin, SoftI2C
 from microWebSrv import MicroWebSrv
+from tones_songs import tones, minute_in_g_major, tempo_minute_in_g_major
 
 # đặt biến nhiệt độ, độ ẩm
 prev_temp = 1
@@ -15,7 +16,7 @@ new_humid = 0
 max_temp = 100
 max_humid = 90
 # Khởi tạo DHT22
-dht22 = dht.DHT22(Pin(34))
+dht22 = dht.DHT22(Pin(32))
 # khởi tạo màn hình LCD
 i2c = SoftI2C(scl=Pin(22), sda=Pin(21), freq=10000)
 lcd = I2cLcd(i2c, 0x27, 2, 16)
@@ -69,15 +70,16 @@ def play_song(song, tempo):
 
 # Hàm cập nhật các sensor theo chu kỳ
 def update_sensors():
+    global prev_temp, new_temp, prev_humid, new_humid
     while True:
         prev_temp = new_temp
         prev_humid = new_humid
         new_temp, new_humid = read_dht22()
         if new_temp != prev_temp or new_humid != prev_humid:
             lcd_output(f"{new_temp}, {new_humid}")
-        # if not is_buzzer_playing:
-        #     if new_temp > max_temp and new_humid > max_humid:
-        #         _thread.start_new_thread(play_song(song1, tempo1), ())
+        if not is_buzzer_playing:
+            if new_temp > max_temp and new_humid > max_humid:
+                _thread.start_new_thread(play_song(minute_in_g_major, tempo_minute_in_g_major), ())
         #     elif new_temp > max_temp:
         #         _thread.start_new_thread(play_song(song2, tempo2), ())
         #     elif new_humid > max_humid:
@@ -119,6 +121,7 @@ def _closed_callback(websocket):
 
 
 # Thực hiện cập nhật sensor theo chu kỳ
+be_quiet()
 _thread.start_new_thread(update_sensors, ())
 # tạo máy chủ webserver
 mws = MicroWebSrv(webPath="/www")  # TCP port 80 and files in /www
