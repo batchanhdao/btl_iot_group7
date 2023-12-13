@@ -1,0 +1,15 @@
+body {
+    text-align: center;
+}
+
+
+tr,
+td {
+    border: 1px solid black;
+    font-weight: bold;
+    padding: 10px;
+}
+.Center {
+    text-align: center;
+    
+}

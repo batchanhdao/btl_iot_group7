@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weboscoket MQTT</title>
+   
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link href="style1.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://getbootstrap.com/docs/5.3/assets/css/docs.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body>
+    <div class="Center">
+        <nav class="navbar navbar-expand-lg bg-body-tertiary">
+            <ul class="list-inline">
+                <li class="list-inline-item">
+                    <a href="chart.html"
+                        class="link-info link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"><h5>View
+                        Chart</h5></a>
+                </li>
+                <li class="list-inline-item">
+                    <a href="weather.html"
+                        class="link-info link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"><h5>View
+                        Local Weather</h5></a>
+                </li>
+                <li class="list-inline-item">
+                    <a href="chat.html"
+                        class="link-info link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"><h5>Ask
+                        us</h5></a>
+                </li>
+            </ul>
+        </nav>
+    
+        <h1>IOT GROUP 7: ÁNH - LONG</h1>
+        <h1>Temperature: <span id='temp'>-</span></h1>
+        <h1>Humidity: <span id='hum'>-</span></h1>
+    </div>
+    <div>
+        <canvas id="myChartTemp"></canvas>
+    </div>
+    <div>
+        <canvas id="myChartHum"></canvas>
+    </div>
+
+</body>
+<script>
+    const ctxTemp = document.getElementById('myChartTemp');
+    const ctxHum = document.getElementById('myChartHum');
+    let myChartTemp;
+    let myChartHum;
+    // Mảng để lưu trữ dữ liệu nhiệt độ và độ ẩm
+    const temperatureData = [];
+    const humidityData = [];
+    const timeData = [];
+    const topicTem = '/iot/group7/temp';
+    const topicHum = '/iot/group7/hum';
+
+    // Hàm để thêm dữ liệu mới vào mảng và vẽ biểu đồ
+    function addDataAndDrawChartTemp() {
+
+        // Chỉ hiển thị 30 điểm dữ liệu mới nhất
+        if (temperatureData.length > 20) {
+            temperatureData.shift();
+        }
+
+        console.log(timeData)
+
+        // Update the existing chart with new data
+        if (myChartTemp) {
+            myChartTemp.data.labels = timeData;
+            myChartTemp.data.datasets.data = temperatureData;
+            myChartTemp.update();
+        } else {
+            // Create a new chart if it doesn't exist
+            myChartTemp = new Chart(ctxTemp, {
+                type: 'line',
+                data: {
+                    // labels: Array.from({ length: temperatureData.length }, (_, i) => i + 1),
+                    labels: timeData,
+                    datasets: [
+                        {
+                            label: 'Temperature (°C)',
+                            data: temperatureData,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 2,
+                            fill: false,
+                        },
+                    ],
+                },
+            });
+        }
+    }
+
+
+    // Hàm để thêm dữ liệu mới vào mảng và vẽ biểu đồ
+    function addDataAndDrawChartHum() {
+        console.log(temperatureData);
+        console.log(humidityData);
+
+        // Chỉ hiển thị 30 điểm dữ liệu mới nhất
+        if (humidityData.length > 20) {
+            humidityData.shift();
+        }
+        console.log(timeData)
+
+        // Update the existing chart with new data
+        if (myChartHum) {
+            myChartHum.data.labels = timeData;
+            myChartHum.data.datasets.data = humidityData;
+            myChartHum.update();
+        } else {
+            // Create a new chart if it doesn't exist
+            myChartHum = new Chart(ctxHum, {
+                type: 'line',
+                data: {
+                    // labels: Array.from({ length: temperatureData.length }, (_, i) => i + 1),
+                    labels: timeData,
+                    datasets: [
+                        {
+                            label: 'Humidity (%)',
+                            data: humidityData,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 2,
+                            fill: false,
+                        },
+                    ],
+                },
+            });
+        }
+    }
+
+
+
+    const clientId = 'mqttjs_' + Math.random().toString(16).substr(2, 8)
+    const host = 'ws://broker.hivemq.com:8000/mqtt'
+    const options = {
+        keepalive: 60,
+        clientId: clientId,
+        protocolId: 'MQTT',
+        protocolVersion: 4,
+        clean: true,
+        reconnectPeriod: 1000,
+        connectTimeout: 30 * 1000,
+        will: {
+            topic: 'WillMsg',
+            payload: 'Connection Closed abnormally..!',
+            qos: 0,
+            retain: false
+        },
+    }
+    console.log('Connecting mqtt client');
+    const client = mqtt.connect(host, options);
+    client.on('error', (err) => {
+        console.log('Connection error: ', err);
+        client.end();
+    })
+    client.on('reconnect', () => {
+        console.log('Reconnecting...');
+    })
+
+    client.on('connect', () => {
+        console.log(`Client connected: ${clientId}`);
+        client.subscribe([topicTem], () => {
+            console.log(`Subscribe to topic '${topicTem}'`)
+        })
+        client.subscribe([topicHum], () => {
+            console.log(`Subscribe to topic '${topicHum}'`)
+        })
+    })
+
+
+
+    // Receive
+    client.on('message', (topic, message, packet) => {
+        let temp = 0;
+        let hum = 0;
+        console.log(`Received Message: ${message.toString()} On topic: ${topic}`);
+        if (topic == topicTem) {
+            const s_temp = message.toString();
+            document.getElementById('temp').innerHTML = s_temp;
+            temp = parseFloat(s_temp);
+            temperatureData.push(temp);
+        }
+        if (topic == topicHum) {
+            const s_hum = message.toString();
+            document.getElementById('hum').innerHTML = s_hum;
+            hum = parseFloat(s_hum);
+            humidityData.push(hum);
+        }
+        if (temperatureData.length == humidityData.length) {
+            date = new Date();
+            timeData.push(date.getSeconds().toString() + ":" + date.getMinutes().toString() + ":" + date.getHours().toString());
+            if (timeData.length > 20) {
+                timeData.shift();
+            }
+            addDataAndDrawChartTemp();
+            addDataAndDrawChartHum()
+        }
+
+    })
+
+</script>
+
+</html>

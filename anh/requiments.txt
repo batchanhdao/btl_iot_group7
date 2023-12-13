@@ -1,0 +1,5 @@
+IDE: VSCode
+thư viện cần cài đặt:
+1. pip install youtube-search
+2. pip install paho-mqtt
+3. pip install GoogleNews
