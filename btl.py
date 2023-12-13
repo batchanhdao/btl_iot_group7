@@ -18,9 +18,9 @@ gc.collect()
 
 bo = Boot()
 
-ssid = 'Le Canh'
+ssid = 'Bphone'
 # ssid = 'Canh1'
-password = '16011710'
+password = '123456789'
 
 # connect to wifi
 bo.ConnectWifi(ssid, password)
@@ -33,7 +33,7 @@ hum = 0
 T_Tem = [20, 40]; temp_status = ""
 T_Hum = [40, 60]; hum_status = ""
 
-
+sensor = dht.DHT22(Pin(34))
 
 # tạo một đối tượng socket với hai tham số: socket.AF_INET chỉ định sử dụng IPv4
 # và socket.SOCK_STREAM chỉ định sử dụng giao thức TCP.
@@ -85,6 +85,9 @@ while True:
     response = web_page()
     
     if "getData" in request:
+#         sensor.measure()
+#         temp = sensor.temperature()
+#         hum = sensor.humidity()
         temp = random.randint(-40,80)
         hum = random.randint(0,100)
         temp_status, hum_status, led_status = "", "", ""

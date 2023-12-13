@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weboscoket MQTT</title>
+    <style>
+        img {
+            height: 250px;
+            width: 400px;
+        }
+    </style>
+
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link href="style1.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://getbootstrap.com/docs/5.3/assets/css/docs.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body>
+    <div class="Center">
+        <nav class="navbar navbar-expand-lg bg-body-tertiary">
+            <ul class="list-inline">
+                <li class="list-inline-item">
+                    <a href="chart.html"
+                        class="link-info link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"><h5>View
+                        Chart</h5></a>
+                </li>
+                <li class="list-inline-item">
+                    <a href="weather.html"
+                        class="link-info link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"><h5>View
+                        Local Weather</h5></a>
+                </li>
+                <li class="list-inline-item">
+                    <a href="chat.html"
+                        class="link-info link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"><h5>Ask
+                        us</h5></a>
+                </li>
+            </ul>
+        </nav>
+        <h1>IOT GROUP 7: ÁNH - LONG</h1>
+        <h1>Temperature: <span id='temp'>-</span></h1>
+        <h1>Humidity: <span id='hum'>-</span></h1>
+    
+        <br>
+        <div>
+            <input type="text" id="ask">
+            <button type="button" onclick="subAsk()" class="btn btn-success">Send</button>
+
+        </div>
+        <br>
+        <div id="video-container"></div>
+        <h3>Informations</h3>
+        <!-- Container for the table -->
+        <div id="newspaper-container"></div>
+    </div>
+
+</body>
+<script>
+    const topicTem = '/iot/group7/temp';
+    const topicHum = '/iot/group7/hum';
+    const topicAsk = '/iot/group7/ask';
+    const topicAnswer = '/iot/group7/answer';
+
+
+    const clientId = 'mqttjs_' + Math.random().toString(16).substr(2, 8)
+    const host = 'ws://broker.hivemq.com:8000/mqtt'
+    const options = {
+        keepalive: 60,
+        clientId: clientId,
+        protocolId: 'MQTT',
+        protocolVersion: 4,
+        clean: true,
+        reconnectPeriod: 1000,
+        connectTimeout: 30 * 1000,
+        will: {
+            topic: 'WillMsg',
+            payload: 'Connection Closed abnormally..!',
+            qos: 0,
+            retain: false
+        },
+    }
+    console.log('Connecting mqtt client');
+    const client = mqtt.connect(host, options);
+    client.on('error', (err) => {
+        console.log('Connection error: ', err);
+        client.end();
+    })
+    client.on('reconnect', () => {
+        console.log('Reconnecting...');
+    })
+
+    client.on('connect', () => {
+        console.log(`Client connected: ${clientId}`);
+        client.subscribe([topicTem], () => {
+            console.log(`Subscribe to topic '${topicTem}'`)
+        })
+        client.subscribe([topicHum], () => {
+            console.log(`Subscribe to topic '${topicHum}'`)
+        })
+        client.subscribe([topicAsk], () => {
+            console.log(`Subscribe to topic '${topicAsk}'`)
+        })
+        client.subscribe([topicAnswer], () => {
+            console.log(`Subscribe to topic '${topicAnswer}'`)
+        })
+    })
+
+
+
+    // Receive
+    client.on('message', (topic, message, packet) => {
+        console.log(`Received Message: ${message.toString()} On topic: ${topic}`);
+        if (topic == topicTem) {
+            const s_temp = message.toString();
+            document.getElementById('temp').innerHTML = s_temp;
+        }
+        if (topic == topicHum) {
+            const s_hum = message.toString();
+            document.getElementById('hum').innerHTML = s_hum;
+        }
+        if (topic == topicAnswer) {
+            const msg = JSON.parse(message.toString());
+            document.getElementById("video-container").innerHTML = msg.video;
+            document.getElementById("newspaper-container").innerHTML = msg.newspaper;
+        }
+
+    })
+
+    function subAsk() {
+        let ask = document.getElementById("ask");
+        console.log(ask.value);
+        client.publish(topicAsk, ask.value.toString(), { qos: 0, retain: false }, (error) => {
+            if (error) {
+                console.error(error)
+            }
+        })
+
+    }
+
+</script>
+
+</html>

@@ -1,126 +1,222 @@
-try:
-  import usocket as socket
-except:
-  import socket
-import ujson
 import network
-from machine import Pin
-import dht
-import random
 
-from boot import Boot
-
-import esp
-esp.osdebug(None)
-
-import gc
-gc.collect()
-
-bo = Boot()
-
-ssid = 'Le Canh'
-# ssid = 'Canh1'
-password = '16011710'
-
-# connect to wifi
-bo.ConnectWifi(ssid, password)
-# ---------------------------------------
-
-led1 = Pin(2, Pin.OUT); led1.off()
-ledTH = Pin(4, Pin.OUT); ledTH.off()
-temp = 0
-hum = 0
-T_Tem = [20, 40]; temp_status = ""
-T_Hum = [40, 60]; hum_status = ""
-
-
-
-# tạo một đối tượng socket với hai tham số: socket.AF_INET chỉ định sử dụng IPv4
-# và socket.SOCK_STREAM chỉ định sử dụng giao thức TCP.
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# create server socket tcp with ip and port = 80 for http
-s.bind(('', 80))
-# đặt socket vào chế độ lắng nghe và chấp nhận tối đa 5 kết nối đồng thời từ các client
-s.listen(5)
-
-def web_page():
-    led = ""
-    if led1.value()==1:
-        led = "ON"
-        print('led on')
-    if led1.value()==0:
-        led = "OFF"
-        print('led off')
-    return bo.Index(led, T_Tem, T_Hum)
+class Boot():
+    def __init__(this):
+        pass
     
-        
-response=""
-while True:
-#     socket accept
-    conn, addr = s.accept()
-    print("got connnection from" + str(addr))
-#     got connnection from('192.168.1.9', 63260)
+    def ConnectWifi(this, ssid, password):
+        # connect to wifi
+        station = network.WLAN(network.STA_IF)
+        station.active(True)
+        station.connect(ssid, password)
+        # connect fail
+        while station.isconnected() == False:
+          pass
+
+        print('Connection successful')
+        print(station.ifconfig())
     
-#     socket receive
-    request = conn.recv(1024)
-    print("----------")
-    print("Content: " + str(request))
-    request = str(request)
-    if "led1=1" in request:
-        led1.value(1)
-    if "led1=0" in request:
-        led1.value(0)
-        
-    if "POST /set-temp-hum" in request:
-        vitri = request.find("tempDown")
-        values = request[vitri : len(request)-1]
-        print(values)
-        values = values.split('&')
-        tempDown, tempUp = values[0].split('='), values[1].split('=')
-        humDown, humUp = values[2].split('='), values[3].split('=')
-        T_Tem[0], T_Tem[1] = int(tempDown[1]), int(tempUp[1])
-        T_Hum[0], T_Hum[1] = int(humDown[1]), int(humUp[1])
+    def Index(this):
+            
+        html_page = """<!DOCTYPE html>
+            <html lang="en">
 
-        
-    response = web_page()
-    
-    if "getData" in request:
-        temp = random.randint(-40,80)
-        hum = random.randint(0,100)
-        temp_status, hum_status, led_status = "", "", ""
-        if temp > T_Tem[0] and temp < T_Tem[1]:
-            temp_status = "normal"
-        if temp <= T_Tem[0] or temp >= T_Tem[1]:
-            temp_status = "warning"
-        if hum > T_Hum[0] and hum < T_Hum[1]:
-            hum_status = "normal"
-        if hum <= T_Hum[0] or hum >= T_Hum[1]:
-            hum_status = "warning"  
-        if hum_status == 'warning' or temp_status == 'warning':
-            ledTH.value(1)
-            led_status = "LIGHT"
-        if hum_status == 'normal' and temp_status == 'normal':
-            ledTH.value(0)
-            led_status = "DANK"
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Weboscoket MQTT</title>
+                <style>
+                    body {
+                        /* background-color: #E6D8D5; */
+                        text-align: center;
+                    }
+                </style>
+                <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            </head>
+
+            <body>
+                <div>
+                    <h1>Lê Hồng Ánh - B20DCCN083</h1>
+                    <h1>Temperature: <span id='temp'>-</span></h1>
+                    <h1>Humidity: <span id='hum'>-</span></h1>
+
+                </div>
+                <div>
+                    <canvas id="myChartTemp"></canvas>
+                </div>
+                <div>
+                    <canvas id="myChartHum"></canvas>
+                </div>
+                <a href="weather.html">View Local Weather</a>
+
+            </body>
+            <script>
+                const ctxTemp = document.getElementById('myChartTemp');
+                const ctxHum = document.getElementById('myChartHum');
+                let myChartTemp;
+                let myChartHum;
+                // Mảng để lưu trữ dữ liệu nhiệt độ và độ ẩm
+                const temperatureData = [];
+                const humidityData = [];
+                const timeData = [];
+
+                // Hàm để thêm dữ liệu mới vào mảng và vẽ biểu đồ
+                function addDataAndDrawChartTemp() {
+
+                    // Chỉ hiển thị 30 điểm dữ liệu mới nhất
+                    if (temperatureData.length > 20) {
+                        temperatureData.shift();
+                    }
+
+                    console.log(timeData)
+
+                    // Update the existing chart with new data
+                    if (myChartTemp) {
+                        myChartTemp.data.labels = timeData;
+                        myChartTemp.data.datasets.data = temperatureData;
+                        myChartTemp.update();
+                    } else {
+                        // Create a new chart if it doesn't exist
+                        myChartTemp = new Chart(ctxTemp, {
+                            type: 'line',
+                            data: {
+                                // labels: Array.from({ length: temperatureData.length }, (_, i) => i + 1),
+                                labels: timeData,
+                                datasets: [
+                                    {
+                                        label: 'Temperature (°C)',
+                                        data: temperatureData,
+                                        borderColor: 'rgba(255, 99, 132, 1)',
+                                        borderWidth: 2,
+                                        fill: false,
+                                    },
+                                ],
+                            },
+                        });
+                    }
+                }
 
 
-        data = {
-            "temp": temp,  # Giá trị nhiệt độ từ MicroPython
-            "hum": hum,    # Giá trị độ ẩm từ MicroPython
-            "temp_status": temp_status,  # Trạng thái nhiệt độ (normal hoặc warning)
-            "hum_status": hum_status,      # Trạng thái độ ẩm (normal hoặc warning)
-            "led_status": led_status
-        }
-        response = ujson.dumps(data)
+                // Hàm để thêm dữ liệu mới vào mảng và vẽ biểu đồ
+                function addDataAndDrawChartHum() {
+                    console.log(temperatureData);
+                    console.log(humidityData);
 
-    conn.send('HTTP/1.1 200 OK\n')
-    conn.send('Content-Type: text/html\n')
-    conn.send('Connection: close\n\n')
-    conn.sendall(response)
-    conn.close()
+                    // Chỉ hiển thị 30 điểm dữ liệu mới nhất
+                    if (humidityData.length > 20) {
+                        humidityData.shift();
+                    }
+                    console.log(timeData)
+
+                    // Update the existing chart with new data
+                    if (myChartHum) {
+                        myChartHum.data.labels = timeData;
+                        myChartHum.data.datasets.data = humidityData;
+                        myChartHum.update();
+                    } else {
+                        // Create a new chart if it doesn't exist
+                        myChartHum = new Chart(ctxHum, {
+                            type: 'line',
+                            data: {
+                                // labels: Array.from({ length: temperatureData.length }, (_, i) => i + 1),
+                                labels: timeData,
+                                datasets: [
+                                    {
+                                        label: 'Humidity (%)',
+                                        data: humidityData,
+                                        borderColor: 'rgba(75, 192, 192, 1)',
+                                        borderWidth: 2,
+                                        fill: false,
+                                    },
+                                ],
+                            },
+                        });
+                    }
+                }
 
 
 
+                const clientId = 'mqttjs_' + Math.random().toString(16).substr(2, 8)
+                const host = 'ws://broker.hivemq.com:8000/mqtt'
+                const options = {
+                    keepalive: 60,
+                    clientId: clientId,
+                    protocolId: 'MQTT',
+                    protocolVersion: 4,
+                    clean: true,
+                    reconnectPeriod: 1000,
+                    connectTimeout: 30 * 1000,
+                    will: {
+                        topic: 'WillMsg',
+                        payload: 'Connection Closed abnormally..!',
+                        qos: 0,
+                        retain: false
+                    },
+                }
+                console.log('Connecting mqtt client');
+                const client = mqtt.connect(host, options);
+                client.on('error', (err) => {
+                    console.log('Connection error: ', err);
+                    client.end();
+                })
+                client.on('reconnect', () => {
+                    console.log('Reconnecting...');
+                })
 
+                const topicTem = '/iot/group7/temp'
+                const topicHum = '/iot/group7/hum'
+                client.on('connect', () => {
+                    console.log(`Client connected: ${clientId}`);
+                    client.subscribe([topicTem], () => {
+                        console.log(`Subscribe to topic '${topicTem}'`)
+                        // client.publish(topicTem, '40 C', { qos: 0, retain: false }, (error) => {
+                        //     if (error) {
+                        //         console.error(error)
+                        //     }
+                        // })
+                    })
+                    client.subscribe([topicHum], () => {
+                        console.log(`Subscribe to topic '${topicHum}'`)
+                        // client.publish(topicHum, '30', { qos: 0, retain: false }, (error) => {
+                        //     if (error) {
+                        //         console.error(error)
+                        //     }
+                        // })
+                    })
+                })
 
+                // Receive
+                client.on('message', (topic, message, packet) => {
+                    let temp = 0;
+                    let hum = 0;
+                    console.log(`Received Message: ${message.toString()} On topic: ${topic}`);
+                    if (topic == '/iot/group7/temp') {
+                        const s_temp = message.toString();
+                        document.getElementById('temp').innerHTML = s_temp;
+                        temp = parseFloat(s_temp);
+                        temperatureData.push(temp);
+                    }
+                    if (topic == '/iot/group7/hum') {
+                        const s_hum = message.toString();
+                        document.getElementById('hum').innerHTML = s_hum;
+                        hum = parseFloat(s_hum);
+                        humidityData.push(hum);
+                    }
+                    if (temperatureData.length == humidityData.length) {
+                        date = new Date();
+                        timeData.push(date.getSeconds().toString() + ":" + date.getMinutes().toString() + ":" + date.getHours().toString());
+                        if (timeData.length > 20) {
+                            timeData.shift();
+                        }
+                        addDataAndDrawChartTemp();
+                        addDataAndDrawChartHum()
+                    }
+
+                })
+
+            </script>
+
+            </html>"""
+        return html_page
 
