@@ -3,8 +3,7 @@ body {
 }
 
 
-tr,
-td {
+tr, td {
     border: 1px solid black;
     font-weight: bold;
     padding: 10px;
